@@ -1,0 +1,5 @@
+fastapi
+uvicorn
+PyJWT
+psycopg2
+python-dotenv
