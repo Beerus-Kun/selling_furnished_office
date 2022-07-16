@@ -84,23 +84,11 @@ CREATE TABLE product (
 	quantity int,
     score float default 0,
     review_turn int default 0,
-
+    id_image int[],
     FOREIGN KEY (id_category) REFERENCES category(id_category)
 );
 
--- Product_image table --
-
-CREATE TABLE product_image(
-	id_product serial,
-    id_image serial,
-
-    FOREIGN KEY(id_product) REFERENCES product(id_product),
-    FOREIGN KEY(id_image) REFERENCES image(id_image),
-    PRIMARY KEY(id_product, id_image)
-);
-
 -- Coupon table --
-
 CREATE TABLE coupon(
     id_coupon text PRIMARY KEY,
     quantity integer,
