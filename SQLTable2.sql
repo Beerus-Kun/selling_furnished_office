@@ -35,13 +35,6 @@ CREATE TABLE customer(
     FOREIGN KEY(username) REFERENCES account(username)
 );
 
--- Image table  --
-
-CREATE TABLE image (
-	id_image serial PRIMARY KEY,
-	link text
-);
-
 -- Product type table --
 CREATE TABLE product_type (
 	id_type integer PRIMARY KEY,
@@ -84,7 +77,7 @@ CREATE TABLE product (
 	quantity int,
     score float default 0,
     review_turn int default 0,
-    id_image int[],
+    image text[],
     FOREIGN KEY (id_category) REFERENCES category(id_category)
 );
 
