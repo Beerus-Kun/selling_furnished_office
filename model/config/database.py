@@ -12,5 +12,6 @@ def conn():
         user=os.getenv("USER"),
         password=os.getenv("PASSWORD")
     )
+    conn.autocommit = True
     return conn
 

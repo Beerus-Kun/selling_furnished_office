@@ -79,7 +79,7 @@ begin
         return err;
     elsif exists(
         select * 
-        from customer case
+        from customer c
         where c.phone = p_phone
     ) then
         update customer
@@ -127,15 +127,15 @@ end;$$;
 -- select_account(phone) --
 -- return -1 (no exists user) | 1 table select * from
 CREATE OR REPLACE function select_account(
-	p_phone text
+	p_username text
 )
 returns table(
     err integer,
-    username text,
     name text,
     gender smallint,
     email text,
-    phone text
+    phone text,
+    id_role int
 )
 language plpgsql    
 as $$
@@ -144,16 +144,18 @@ err integer;
 begin
     if exists(
         select *
-        from customer c
-        where c.phone = p_phone
+        from account a
+        where a.username = p_username
     ) then
         return query
-        select 1, c.username, c.name, c.gender, c.email, c.phone
-        from customer c
-        where c.phone = p_phone;
+        select 1, c.name, c.gender, c.email, c.phone, a.id_role
+        from account a
+        left join customer c
+        on a.username = c.username
+        where a.username = p_username;
     else
         return query
-        select select -1, null, null, 0::smallint, null, null;
+        select -1, null, 0::smallint, null, null, 0;
     end if;
 
 end;$$;

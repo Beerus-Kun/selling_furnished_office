@@ -1,22 +1,49 @@
 import psycopg2
 from .config import database
 
-# p_username text,
-# 	p_password text,
-# 	p_name text,
-# 	p_id_role integer,
-# 	p_gender smallint default null,
-# 	p_email text default null,
-# 	p_phone text default null
+# create_account(username, password, id_role, name, gender, email, phone)
 
-def createCustomerAccount(username, password, name, id_role, gender, email, phone):
+
+def createCustomerAccount(username, password, name, gender, email, phone):
     try:
         conn = database.conn()
         cur = conn.cursor()
 
-        cur.execute('SELECT create_account(%s, %s, %s, %s, %s, %s, %s)', (username, password, name, id_role, gender, email, phone))
+        cur.execute("SELECT create_account(%s, %s, %s, %s, %s::int2, %s, %s);", (username, password.decode("utf-8"), 3, name, gender, email, phone))
+        res = cur.fetchone()
+        cur.close()
+        return res[0]
+    except (Exception, psycopg2.DatabaseError) as error:
+        print(error)
+    finally:
+        if conn is not None:
+            conn.close()
+
+def createStaffAccount(username, password):
+    try:
+        conn = database.conn()
+        cur = conn.cursor()
+
+        cur.execute('SELECT create_account(%s, %s, %s)', (username, password.decode("utf-8"), 2))
 
         res = cur.fetchone()
+        cur.close()
+        return res[0]
+    except (Exception, psycopg2.DatabaseError) as error:
+        print(error)
+    finally:
+        if conn is not None:
+            conn.close()
+
+def getAccount(username):
+    try:
+        conn = database.conn()
+        cur = conn.cursor()
+
+        cur.execute('SELECT * from select_account(%s)', (username,))
+
+        res = dict((cur.description[i][0], value) 
+               for i, value in enumerate(cur.fetchone()))
         cur.close()
         return res
     except (Exception, psycopg2.DatabaseError) as error:
@@ -25,19 +52,21 @@ def createCustomerAccount(username, password, name, id_role, gender, email, phon
         if conn is not None:
             conn.close()
 
-def createStaffAccount(username, password, name, id_role):
+def getPassword(username):
     try:
         conn = database.conn()
         cur = conn.cursor()
 
-        cur.execute('SELECT create_account(%s, %s, %s, %s)', (username, password, name, id_role))
-
-        res = cur.fetchone()
+        cur.execute('SELECT * from select_password(%s)', (username,))
+        # res = [dict((cur.description[i][0], value) 
+        #        for i, value in enumerate(row)) for row in cur.fetchall()]
+        res = dict((cur.description[i][0], value) 
+               for i, value in enumerate(cur.fetchone()))
         cur.close()
+
         return res
     except (Exception, psycopg2.DatabaseError) as error:
         print(error)
     finally:
         if conn is not None:
             conn.close()
-

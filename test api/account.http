@@ -1,0 +1,20 @@
+### tạo tài khoản customer
+POST http://localhost:8000/account/sign_up
+# Authorization: Beaer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZF9hY2NvdW50IjoxLCJwb3NpdGlvbiI6MiwiZW1haWwiOiJhZG1pbjEiLCJzdGF0dXMiOjEsImlhdCI6MTYzMzMxNjc4MiwiZXhwIjoxNjMzMzUyNzgyfQ.8a5Z7yYMa50z82HUY-bv1qw1v9MvxFNngt6wiDRZUbc
+Content-Type: application/json
+
+{
+    "username": "beerus5",
+    "password": "123456",
+    "email": "fhweofhewiof",
+    "gender":1,
+    "phone": "ghwioghrg",
+    "name": "fwefewhf"
+}
+
+# username: str
+#     password: str
+#     gender: int
+#     email: str
+#     phone: str
+#     name: str
