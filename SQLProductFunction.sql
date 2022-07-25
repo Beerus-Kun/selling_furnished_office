@@ -24,7 +24,7 @@ CREATE OR REPLACE function create_product(
     p_description text,
     p_quantity int,
     p_listed_price int,
-	p_image text[]
+	p_image text
 )
 returns int
 language plpgsql    
@@ -48,7 +48,7 @@ CREATE OR REPLACE function update_product(
     p_description text,
     p_quantity int,
     p_listed_price int,
-	p_image text[]
+	p_image text
 )
 returns void
 language plpgsql    
@@ -60,7 +60,7 @@ begin
 --     values (p_id_category, p_name, p_description, p_quantity, p_listed_price, p_listed_price, p_image)
     update product
     set id_category = p_id_category, name = p_name, quantity = p_quantity, description = p_description, listed_price = p_listed_price, image = p_image
-    where id_product = p_id_product
+    where id_product = p_id_product;
 end;$$;
 
 -- buy product --
@@ -84,7 +84,7 @@ begin
     else 
         for i in 1..num1 loop
             update product
-            set quantity -= p_quantity[i]
+            set quantity = quantity - p_quantity[i]
             where id_product = p_id_product[i];
         end loop;
 		return 1;
@@ -95,7 +95,7 @@ end;$$;
 -- select_product()
 -- return table
 CREATE OR REPLACE function select_product(
-	
+	p_id_category int default null
 )
 returns table(
     id_product int,
@@ -107,15 +107,24 @@ returns table(
     current_price int,
     score float,
     review_turn int,
-    image text[]
+    image text
 )
 language plpgsql    
 as $$
 --Declare  
 --err integer;  
 begin
-    return query
-    select * from product;
+	if p_id_category is null then
+		return query
+		select * from product
+		order by id_category, id_product;
+	else
+		return query
+		select * 
+		from product p
+		where p.id_category = p_id_category
+		order by p.id_product;
+	end if;
 end;$$;
 
 -- review product --

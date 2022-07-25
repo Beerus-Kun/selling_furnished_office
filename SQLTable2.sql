@@ -77,7 +77,7 @@ CREATE TABLE product (
 	quantity int,
     score float default 0,
     review_turn int default 0,
-    image text[],
+    image text,
     FOREIGN KEY (id_category) REFERENCES category(id_category)
 );
 

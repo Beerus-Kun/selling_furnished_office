@@ -50,7 +50,7 @@ end;$$;
 -- delete category --
 -- delete_category(id_category)
 -- return void
-CREATE OR REPLACE function (
+CREATE OR REPLACE function delete_category(
 	p_id_category int
 )
 returns void
@@ -60,7 +60,7 @@ as $$
 --err integer;  
 begin
     delete from category
-    where id_category = p_id_category
+    where id_category = p_id_category;
 end;$$;
 
 -- view all category information--
@@ -73,22 +73,25 @@ returns table(
     err int,
     id_category int,
     name text,
-    id_type int
+    type text
 )
 language plpgsql    
 as $$
 -- Declare  
 -- err integer;  
 begin
-    if p_id_category is not null then
+    if p_id_type is null then
         return query
-        select 1, c.id_category, c.name, c.id_type
-        from category c
-        where c.id_type = p_id_type
+        select 1, c.id_category, c.name, p.name
+        from category c, product_type p
+		where c.id_type = p.id_type
+        order by c.id_type, c.id_category;
     else
         return query
-        select 1, c.id_category, c.name, c.id_type
-        from category c
+        select 1, c.id_category, c.name, c.name
+        from category c, product_type p
+        where c.id_type = p_id_type and c.id_type = p.id_type
+		order by c.id_category;
     end if;
 end;$$;
 
@@ -105,6 +108,7 @@ as $$
 --Declare  
 --err integer;  
 begin
-    select id_type, name
-    from product_type
+    return query
+    select p.id_type, p.name
+    from product_type p;
 end;$$;

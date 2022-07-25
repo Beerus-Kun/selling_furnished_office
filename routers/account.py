@@ -21,7 +21,8 @@ def generateToken(username: str, idRole: str) -> str:
 # def signUp():
 #     return 'hello'
 
-@router.post('/create_staff', dependencies=[Depends(security.validate_admin)])
+### post
+@router.post('/create_staff', dependencies=[Depends(security.validateAdmin)])
 def createStaffAccount(staff: AccountSC.login):
     salt = bcrypt.gensalt()
     hashed = bcrypt.hashpw(staff.password.encode(), salt)
@@ -64,7 +65,29 @@ def login(account: AccountSC.login):
         else:
             return {'code':403}
 
+### put
+@router.put('/info', dependencies=[Depends(security.validateCustomer)])
+def changeInformation(account: AccountSC.updateCustomer):
+    res = AccountDB.changeInfo(account.phone, account.name, account.gender, account.email)
+    if res == -1:
+        return {'code':404}
+    elif res == 0:
+        return {'code':402}
+    else:
+        return {'code':202}
 
+### patch
+@router.patch('/password')
+def changePassword(password: AccountSC.password, account: AccountSC.account = Depends(security.validateToken)):
+    salt = bcrypt.gensalt()
+    hashed = bcrypt.hashpw(password.password.encode(), salt)
+    res = AccountDB.changePassword(account.username, hashed)
+    if res == -1:
+        return {'code':404}
+    else:
+        return {'code':200}
+
+### get
 @router.get('/info')
-def getInformation(account: AccountSC.account = Depends(security.validate_token)):
+def getInformation(account: AccountSC.account = Depends(security.validateToken)):
     return account.dict()

@@ -56,7 +56,7 @@ end;$$;
 
 
 -- update account --
--- update_account(username, name, gender, email, phone) --
+-- update_account(name, gender, email, phone) --
 -- return -1 (no exists user) | 0 (email no valid) | 1 
 CREATE OR REPLACE function update_account(
 	p_phone text,

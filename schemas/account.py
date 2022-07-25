@@ -15,6 +15,12 @@ class customerAccount(BaseModel):
     phone: str
     name: str
 
+class updateCustomer(BaseModel):
+    gender: int
+    email: str
+    phone: str
+    name: str
+
 class login(BaseModel):
     username: str
     password: str
@@ -25,3 +31,6 @@ class account(BaseModel):
     phone: Optional[str]
     email: Optional[str]
     name: Optional[str]
+
+class password(BaseModel):
+    password: str
