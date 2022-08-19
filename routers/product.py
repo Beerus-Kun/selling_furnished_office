@@ -1,5 +1,4 @@
 # from nis import cat
-from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, File
 from schemas import product as ProductSC
 # from schemas import account as AccountSC 
@@ -29,11 +28,13 @@ router = APIRouter()
 @router.post('/image', dependencies=[Depends(security.validateStaff)])
 async def uploadImage(file: bytes = File()):
     try:
+        # print(os.getenv('DROPBOX_TOKEN'))
         dbx = dropbox.Dropbox(os.getenv('DROPBOX_TOKEN'))
+        print(dbx.check_user)
         current = datetime.now()
         dbx.files_upload(file, f'/image/{current}.jpg', mode=dropbox.files.WriteMode("overwrite"))
         shared_link_metadata = dbx.sharing_create_shared_link_with_settings(f"/image/{current}.jpg")
-        return {'code':204, 'url': shared_link_metadata.url}
+        return {'code':204, 'url': shared_link_metadata.url.replace("dl=0", "raw=1")}
     except Exception as e:
         print(e)
         return {'code': 404}
@@ -49,7 +50,7 @@ async def addProduct(product: ProductSC.product):
 
 ### put
 @router.put('/{id}', dependencies=[Depends(security.validateStaff)])
-def changeProduct(id:int, product: ProductSC.product):
+async def changeProduct(id:int, product: ProductSC.product):
     try:
         ProductDB.updateProduct(id, product.id_category, product.name, product.description, product.quantity, product.listed_price, product.image)
         return {'code': 200}

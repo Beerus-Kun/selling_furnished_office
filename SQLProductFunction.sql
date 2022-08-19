@@ -102,9 +102,9 @@ returns table(
     id_category int,
     name text,
     description text,
-    quantity int,
     listed_price int,
     current_price int,
+    quantity int,
     score float,
     review_turn int,
     image text

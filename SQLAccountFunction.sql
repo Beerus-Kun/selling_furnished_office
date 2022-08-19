@@ -40,6 +40,16 @@ begin
         ) then
             err = 0;
             return err;
+        elsif exists(
+			select *
+            from customer c
+            where c.phone = p_phone
+		) then
+			insert into account(username, password, id_role)
+            values (p_username, p_password, p_id_role);
+			update customer c
+			set gender = p_gender, email = p_email, username = p_username, name = p_name
+			where c.phone = p_phone;
         else
             insert into account(username, password, id_role)
             values (p_username, p_password, p_id_role);
@@ -54,6 +64,101 @@ begin
 	return err;
 end;$$;
 
+-- create temp customer --
+-- create_temp_customer(phone)
+CREATE OR REPLACE function create_temp_customer(
+	p_phone text
+)
+returns int
+language plpgsql    
+as $$
+Declare  
+err integer;  
+begin
+    if not exists(
+        select *
+        from customer c
+        where c.phone = p_phone
+    ) then
+        insert into customer (phone) values (p_phone);
+    end if;
+
+end;$$;
+
+-- check username new account --
+-- check_username(username)
+-- return -1 | 1
+CREATE OR REPLACE function check_username(
+	p_username text
+)
+returns int
+language plpgsql    
+as $$
+Declare  
+err integer;  
+begin
+    if exists (
+		select * 
+        from account 
+        where username = p_username
+	) then
+		err = -1;
+		return err;
+    else
+        err = 1;
+        return err;
+	end if;
+end;$$;
+
+-- check phone new account --
+-- check_phone(phone)
+-- return -1 | 1
+CREATE OR REPLACE function check_phone(
+	p_phone text
+)
+returns int
+language plpgsql    
+as $$
+Declare  
+err integer;  
+begin
+    if exists (
+		select * 
+        from customer 
+        where phone = p_phone and username is not null
+	) then
+		err = -1;
+		return err;
+    else
+        err = 1;
+        return err;
+	end if;
+end;$$;
+
+-- check email new account --
+-- check_email(email)
+-- return -1 | 1
+CREATE OR REPLACE function check_email(
+	p_email text
+)
+returns int
+language plpgsql    
+as $$
+Declare  
+err integer;  
+begin
+    if exists (
+		select * 
+        from customer 
+        where email = p_email
+	) then
+		err = -1;
+		return err;
+    else
+        err = 1;
+        return err;
+	end if;
+end;$$;
 
 -- update account --
 -- update_account(name, gender, email, phone) --

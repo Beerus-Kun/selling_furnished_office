@@ -30,6 +30,7 @@ CREATE TABLE customer(
     phone text PRIMARY KEY,
     email text UNIQUE,
     username text UNIQUE,
+        -- notify_token text,
     name text,
     gender smallint, -- 1: nam, 0: nu
     FOREIGN KEY(username) REFERENCES account(username)
@@ -112,6 +113,7 @@ CREATE TABLE bill (
 	total int,
     id_coupon text,
 	id_status int,
+    name text,
 
 	FOREIGN KEY (phone) REFERENCES customer(phone),
     FOREIGN KEY(id_status) REFERENCES status(id_status),

@@ -19,6 +19,21 @@ def createCustomerAccount(username, password, name, gender, email, phone):
         if conn is not None:
             conn.close()
 
+def createTempCustomer(phone):
+    try:
+        conn = database.conn()
+        cur = conn.cursor()
+
+        cur.execute("SELECT create_temp_customer(%s);", (phone,))
+        res = cur.fetchone()
+        cur.close()
+        return res[0]
+    except (Exception, psycopg2.DatabaseError) as error:
+        print(error)
+    finally:
+        if conn is not None:
+            conn.close()
+
 def createStaffAccount(username, password):
     try:
         conn = database.conn()
@@ -96,7 +111,7 @@ def changePassword(username, password):
         conn = database.conn()
         cur = conn.cursor()
 
-        cur.execute('SELECT update_password(%s, %s)', (username, password))
+        cur.execute('SELECT update_password(%s, %s)', (username, password.decode("utf-8")))
         res = cur.fetchone()
         # res = [dict((cur.description[i][0], value) 
         #        for i, value in enumerate(row)) for row in cur.fetchall()]
@@ -104,6 +119,53 @@ def changePassword(username, password):
         #        for i, value in enumerate(cur.fetchone()))
         cur.close()
 
+        return res[0]
+    except (Exception, psycopg2.DatabaseError) as error:
+        print(error)
+    finally:
+        if conn is not None:
+            conn.close()
+
+
+def checkPhone(phone):
+    try:
+        conn = database.conn()
+        cur = conn.cursor()
+
+        cur.execute("SELECT check_phone(%s);", (phone,))
+        res = cur.fetchone()
+        cur.close()
+        return res[0]
+    except (Exception, psycopg2.DatabaseError) as error:
+        print(error)
+    finally:
+        if conn is not None:
+            conn.close()
+
+def checkEmail(email):
+    try:
+        conn = database.conn()
+        cur = conn.cursor()
+
+        cur.execute("SELECT check_email(%s);", (email,))
+        res = cur.fetchone()
+        cur.close()
+        return res[0]
+    except (Exception, psycopg2.DatabaseError) as error:
+        print(error)
+    finally:
+        if conn is not None:
+            conn.close()
+
+
+def checkUsername(username):
+    try:
+        conn = database.conn()
+        cur = conn.cursor()
+
+        cur.execute("SELECT check_username(%s);", (username,))
+        res = cur.fetchone()
+        cur.close()
         return res[0]
     except (Exception, psycopg2.DatabaseError) as error:
         print(error)

@@ -93,6 +93,7 @@ def getProduct(id_category = None):
         # table = [dict((cur.description[i+1][0], value) 
         #        for i, value in enumerate(row[1:])) for row in res]
         # res = cur.fetchone()
+        # print(cur.description)
         res = [dict((cur.description[i][0], value) 
                for i, value in enumerate(row)) for row in cur.fetchall()]
         # res = dict((cur.description[i][0], value) 
