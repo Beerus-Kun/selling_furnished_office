@@ -1,5 +1,0 @@
-- BẮT >= 0
-- CHUẨN HÓA DỮ LIỆU TRƯỚC KHI THÊM VÀO DTB
-- 
-6 LOẠI RÀNG BUỘC:
-- 
