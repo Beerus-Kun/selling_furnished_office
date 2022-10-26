@@ -1,4 +1,4 @@
-from warnings import catch_warnings
+# from warnings import catch_warnings
 from fastapi import APIRouter, Depends
 import stripe, os
 from schemas import bill as BillSC

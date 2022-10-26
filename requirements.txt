@@ -3,6 +3,8 @@ uvicorn
 PyJWT
 psycopg2
 python-dotenv
-python-multipart
 dropbox
 twilio
+jwt
+bcrypt
+stripe
