@@ -8,7 +8,8 @@ CREATE OR REPLACE function create_account(
     p_name text default null,
 	p_gender smallint default null,
 	p_email text default null,
-	p_phone text default null
+	p_phone text default null,
+    p_address text default null
 )
 returns int
 language plpgsql    
@@ -48,21 +49,33 @@ begin
 			insert into account(username, password, id_role)
             values (p_username, p_password, p_id_role);
 			update customer c
-			set gender = p_gender, email = p_email, username = p_username, name = p_name
+			set gender = p_gender, email = p_email, username = p_username, name = p_name, address = p_address
 			where c.phone = p_phone;
         else
             insert into account(username, password, id_role)
             values (p_username, p_password, p_id_role);
-            insert into customer(gender, email, phone, username, name)
-            values(p_gender, p_email, p_phone, p_username, p_name);
+            insert into customer(gender, email, phone, username, name, address)
+            values(p_gender, p_email, p_phone, p_username, p_name, p_address);
         end if;
-    else
-        insert into account(username, password, id_role)
-        values (p_username, p_password, p_id_role);
+    elsif p_id_role = 2 then
+        if exists(
+            select *
+            from staff s
+            where s.email = p_email
+        ) then
+            err = -2;
+            return err;
+        else
+            insert into account(username, password, id_role)
+            values (p_username, p_password, p_id_role);
+            insert into staff(gender, email, username, name)
+            values(p_gender, p_email, p_username, p_name);
+        end if;
 	end if;
 	err = 1;
 	return err;
 end;$$;
+
 
 -- create temp customer --
 -- create_temp_customer(phone)
@@ -167,7 +180,8 @@ CREATE OR REPLACE function update_account(
 	p_phone text,
 	p_name text default null,
 	p_gender smallint default null,
-	p_email text default null
+	p_email text default null,
+    p_address text default null
 )
 returns int
 language plpgsql    
@@ -188,7 +202,7 @@ begin
         where c.phone = p_phone
     ) then
         update customer
-        Set name = p_name, gender = p_gender, email = p_email
+        Set name = p_name, gender = p_gender, email = p_email, address = p_address
         where phone = p_phone;
         err =1;
         return err;
@@ -240,7 +254,8 @@ returns table(
     gender smallint,
     email text,
     phone text,
-    id_role int
+    id_role int,
+    addres text
 )
 language plpgsql    
 as $$
@@ -253,7 +268,7 @@ begin
         where a.username = p_username
     ) then
         return query
-        select 1, c.name, c.gender, c.email, c.phone, a.id_role
+        select 1, c.name, c.gender, c.email, c.phone, a.id_role, c.address
         from account a
         left join customer c
         on a.username = c.username

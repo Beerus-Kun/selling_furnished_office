@@ -33,6 +33,22 @@ begin
     values(p_id_coupon, CURRENT_TIMESTAMP + interval '1 month' * p_month, p_value, p_amount);
 end;$$;
 
+CREATE OR REPLACE function get_public_coupon()
+returns table(
+	id_coupon text,
+	value int
+)
+language plpgsql    
+as $$
+-- Declare  
+-- mon_txt text;  
+begin
+    return query
+	select c.id_coupon, c.value
+	from coupon c
+	where c.quantity > 0 and CURRENT_TIMESTAMP < c.expiration_date 
+    order by c.value desc;
+end;$$;
 
 -- select coupon --
 -- select_coupon(id_coupon)
@@ -62,4 +78,21 @@ begin
         return query
 		select -1, 0;
 	end if;
+end;$$;
+
+
+CREATE OR REPLACE function create_public_coupon(
+	p_id_coupon text,
+    p_month int,
+    p_value int,
+    p_amount int
+)
+returns void
+language plpgsql    
+as $$
+-- Declare  
+-- mon_txt text;  
+begin
+    insert into coupon(id_coupon, expiration_date, value, quantity)
+    values(p_id_coupon, CURRENT_TIMESTAMP + interval '1 month' * p_month, p_value, p_amount);
 end;$$;

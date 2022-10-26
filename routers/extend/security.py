@@ -30,7 +30,7 @@ def validateToken(http_authorization_credentials=Depends(reusable_oauth2)):
             if res.get('err') is None or res.get('err') == -1:
                 raise HTTPException(status_code=403, detail="Something went wrong!")
             else:
-                return AccountSC.account(username=username, idRole=idRole, phone= res.get('phone'), email=res.get('email'), name=res.get('name'))
+                return AccountSC.account(username=username, idRole=idRole, phone= res.get('phone'), email=res.get('email'), name=res.get('name'), address=res.get('addres'))
         return AccountSC.account(username = username, idRole = int(idRole))
     except(jwt.PyJWTError, ValidationError):
         raise HTTPException(
@@ -89,7 +89,7 @@ def validateCustomer(http_authorization_credentials=Depends(reusable_oauth2)):
             if res.get('err') is None or res.get('err') == -1:
                 raise HTTPException(status_code=403, detail="Something went wrong!")
             else:
-                return AccountSC.account(username=username, idRole=idRole, phone= res.get('phone'), email=res.get('email'), name=res.get('name'))
+                return AccountSC.account(username=username, idRole=idRole, phone= res.get('phone'), email=res.get('email'), name=res.get('name'), address=res.get('addres'))
         else:
             raise HTTPException(status_code=403, detail="Role must be customer")
     except(jwt.PyJWTError, ValidationError):
@@ -103,19 +103,19 @@ def validateBuy(http_authorization_credentials=Depends(reusable_oauth2)):
     Decode JWT token to get username => return username
     """
     try:
-        print(1)
+        # print(1)
         payload = jwt.decode(http_authorization_credentials.credentials, os.getenv('SECRET_KEY'), algorithms=[os.getenv('SECURITY_ALGORITHM')])
         username = payload.get('username')
         idRole = int(payload.get('idRole') or 0)
         if idRole == 3:
-            print(2)
+            # print(2)
             res = AccountDB.getAccount(username)
             if res.get('err') is None or res.get('err') == -1:
                 raise HTTPException(status_code=403, detail="Something went wrong!")
             else:
                 return AccountSC.account(username=username, idRole=idRole, phone= res.get('phone'), email=res.get('email'), name=res.get('name'))
         elif idRole == 4:
-            print(3)
+            # print(3)
             phone = payload.get('phone')
             email = payload.get('email')
             return AccountSC.account(username='', idRole=idRole, phone= phone, email=email, name='')
@@ -149,6 +149,7 @@ def validateVerification(http_authorization_credentials=Depends(reusable_oauth2)
             smsValid = bool(payload.get('smsValid'))
             emailValid = bool(payload.get('emailValid'))
             usernameValid = bool(payload.get('usernameValid'))
+            # print(payload.get('smsExpiration'))
             smsExpiration = float(payload.get('smsExpiration'))
             emailExpiration = float(payload.get('emailExpiration'))
             return AccountSC.verification(

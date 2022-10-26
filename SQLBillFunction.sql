@@ -41,7 +41,7 @@ begin
 		if not exists(
             select * 
             from product p
-            where p.id_product = p_id_product[i] and p.quantity > p_quantity[i]
+            where p.id_product = p_id_product[i] and p.quantity >= p_quantity[i]
         ) then
             -- return query
             select -1, p.name, p.quantity
@@ -102,7 +102,7 @@ begin
 		if not exists(
             select * 
             from product p
-            where p.id_product = p_id_product[i] and p.quantity > p_quantity[i]
+            where p.id_product = p_id_product[i] and p.quantity >= p_quantity[i]
         ) then
             select -1, p.name, p.quantity
             from product p
@@ -157,29 +157,25 @@ begin
 end;$$;
 
 
-CREATE OR REPLACE function select_product_bill(
-    p_id_bill text
-)
-returns table(
-    name text,
-    image text,
-    quantity int,
-    price int
-)
-language plpgsql    
-as $$
+CREATE OR REPLACE FUNCTION select_product_bill(
+	p_id_bill integer)
+    RETURNS TABLE(name text, image text, quantity integer, price integer, is_rating smallint, id_product int) 
+    LANGUAGE 'plpgsql'
+    COST 100
+    VOLATILE PARALLEL UNSAFE
+    ROWS 1000
+
+AS $BODY$
 Declare  
 
 begin
     return query(
-        select b.id_bill, TO_CHAR(b.date_time :: time, 'hh24:mi:ss'), TO_CHAR(b.date_time :: date, 'dd/mm/yyyy'), b.address, b.total, c.value, b.id_status, b.name, b.email
-        from bill b
-		left join coupon c
-		on b.id_coupon = c.id_coupon
-        where b.phone = p_phone
-        order by b.id_bill DESC
+        select p.name, p.image, b.quantity, b.price, b.is_rating, p.id_product
+        from product_bill b, product p
+        where b.id_bill = p_id_bill and b.id_product = p.id_product
     );
-end;$$;
+end;
+$BODY$;
 
 CREATE OR REPLACE function cancel_bill(
     p_id_bill int,
@@ -231,7 +227,8 @@ returns table(
     discount int, 
     id_status int, 
     name text, 
-    email text
+    email text,
+    phone text
 )
 language plpgsql    
 as $$
@@ -240,7 +237,7 @@ Declare
 begin
     if p_type = 1 then
         return query(
-            select b.id_bill, TO_CHAR(b.date_time :: time, 'hh24:mi:ss'), TO_CHAR(b.date_time :: date, 'dd/mm/yyyy'), b.address, b.total, c.value, b.id_status, b.name, b.email
+            select b.id_bill, TO_CHAR(b.date_time :: time, 'hh24:mi:ss'), TO_CHAR(b.date_time :: date, 'dd/mm/yyyy'), b.address, b.total, c.value, b.id_status, b.name, b.email, b.phone
             from bill b
 		    left join coupon c
 		    on b.id_coupon = c.id_coupon
@@ -249,7 +246,7 @@ begin
         );
     elsif p_type = 2 then
         return query(
-            select b.id_bill, TO_CHAR(b.date_time :: time, 'hh24:mi:ss'), TO_CHAR(b.date_time :: date, 'dd/mm/yyyy'), b.address, b.total, c.value, b.id_status, b.name, b.email
+            select b.id_bill, TO_CHAR(b.date_time :: time, 'hh24:mi:ss'), TO_CHAR(b.date_time :: date, 'dd/mm/yyyy'), b.address, b.total, c.value, b.id_status, b.name, b.email, b.phone
             from bill b
 		    left join coupon c
 		    on b.id_coupon = c.id_coupon
@@ -258,7 +255,7 @@ begin
         );
     elsif p_type = 3 then
         return query(
-            select b.id_bill, TO_CHAR(b.date_time :: time, 'hh24:mi:ss'), TO_CHAR(b.date_time :: date, 'dd/mm/yyyy'), b.address, b.total, c.value, b.id_status, b.name, b.email
+            select b.id_bill, TO_CHAR(b.date_time :: time, 'hh24:mi:ss'), TO_CHAR(b.date_time :: date, 'dd/mm/yyyy'), b.address, b.total, c.value, b.id_status, b.name, b.email, b.phone
             from bill b
 		    left join coupon c
 		    on b.id_coupon = c.id_coupon
@@ -267,11 +264,102 @@ begin
         );
     else
         return query(
-            select b.id_bill, TO_CHAR(b.date_time :: time, 'hh24:mi:ss'), TO_CHAR(b.date_time :: date, 'dd/mm/yyyy'), b.address, b.total, c.value, b.id_status, b.name, b.email
+            select b.id_bill, TO_CHAR(b.date_time :: time, 'hh24:mi:ss'), TO_CHAR(b.date_time :: date, 'dd/mm/yyyy'), b.address, b.total, c.value, b.id_status, b.name, b.email, b.phone
             from bill b
 		    left join coupon c
 		    on b.id_coupon = c.id_coupon
             where b.id_status = 0
+            order by b.id_bill
+        );
+    end if;
+end;$$;
+
+CREATE OR REPLACE function admin_select_bill(
+    p_start date,
+    p_stop date
+)
+returns table(
+    id_bill integer,
+    "time" text,
+    date text,
+    address text, 
+    total int, 
+    discount int, 
+    id_status int, 
+    name text, 
+    email text,
+    phone text
+)
+language plpgsql    
+as $$
+Declare  
+
+begin
+    return query(
+        select b.id_bill, TO_CHAR(b.date_time :: time, 'hh24:mi:ss'), TO_CHAR(b.date_time :: date, 'dd/mm/yyyy'), b.address, b.total, c.value, b.id_status, b.name, b.email, b.phone
+        from bill b
+        left join coupon c
+        on b.id_coupon = c.id_coupon
+        where b.id_status = 5 and b.date_time>=p_start and b.date_time<=p_stop
+        order by b.id_bill
+    );
+end;$$;
+
+CREATE OR REPLACE function manager_search_bill(
+    p_search text,
+    p_type int
+)
+returns table(
+    id_bill integer,
+    "time" text,
+    date text,
+    address text, 
+    total int, 
+    discount int, 
+    id_status int, 
+    name text, 
+    email text,
+    phone text
+)
+language plpgsql    
+as $$
+Declare  
+
+begin
+    if p_type = 1 then
+        return query(
+            select b.id_bill, TO_CHAR(b.date_time :: time, 'hh24:mi:ss'), TO_CHAR(b.date_time :: date, 'dd/mm/yyyy'), b.address, b.total, c.value, b.id_status, b.name, b.email, b.phone
+            from bill b
+		    left join coupon c
+		    on b.id_coupon = c.id_coupon
+            where (b.id_status = 1 or b.id_status = 2) and (b.id_bill = p_search::int or b.phone = p_search)
+            order by b.id_bill
+        );
+    elsif p_type = 2 then
+        return query(
+            select b.id_bill, TO_CHAR(b.date_time :: time, 'hh24:mi:ss'), TO_CHAR(b.date_time :: date, 'dd/mm/yyyy'), b.address, b.total, c.value, b.id_status, b.name, b.email, b.phone
+            from bill b
+		    left join coupon c
+		    on b.id_coupon = c.id_coupon
+            where (b.id_status = 3 or b.id_status = 4) and (b.id_bill = p_search::int or b.phone = p_search)
+            order by b.id_bill
+        );
+    elsif p_type = 3 then
+        return query(
+            select b.id_bill, TO_CHAR(b.date_time :: time, 'hh24:mi:ss'), TO_CHAR(b.date_time :: date, 'dd/mm/yyyy'), b.address, b.total, c.value, b.id_status, b.name, b.email, b.phone
+            from bill b
+		    left join coupon c
+		    on b.id_coupon = c.id_coupon
+            where b.id_status = 5 and (b.id_bill = p_search::int or b.phone = p_search)
+            order by b.id_bill
+        );
+    else
+        return query(
+            select b.id_bill, TO_CHAR(b.date_time :: time, 'hh24:mi:ss'), TO_CHAR(b.date_time :: date, 'dd/mm/yyyy'), b.address, b.total, c.value, b.id_status, b.name, b.email, b.phone
+            from bill b
+		    left join coupon c
+		    on b.id_coupon = c.id_coupon
+            where b.id_status = 0 and (b.id_bill = p_search::int or b.phone = p_search)
             order by b.id_bill
         );
     end if;
