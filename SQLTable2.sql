@@ -36,6 +36,16 @@ CREATE TABLE customer(
     FOREIGN KEY(username) REFERENCES account(username)
 );
 
+-- Staff table --
+CREATE TABLE staff(
+    email text PRIMARY KEY,
+    username text UNIQUE,
+        -- notify_token text,
+    name text,
+    gender smallint, -- 1: nam, 0: nu
+    FOREIGN KEY(username) REFERENCES account(username)
+);
+
 -- Product type table --
 CREATE TABLE product_type (
 	id_type integer PRIMARY KEY,

@@ -1,5 +1,6 @@
 import string
 import random
+import re
 import os
 def getCode():
     try:
@@ -38,3 +39,9 @@ def saveCode():
 
 def str2list(txt:str):
     return txt[1:-1].replace('"','').split(',')
+
+def standardized(a:str):
+    whitespace = r"\s+"
+    # Replace all mathces with an empty string
+    nospaces = re.sub(whitespace, " ", a).strip()
+    return nospaces

@@ -14,6 +14,7 @@ class customerAccount(BaseModel):
     email: str
     phone: str
     name: str
+    address: str
 
 class valid(BaseModel):
     email: Optional[str]
@@ -29,10 +30,18 @@ class updateCustomer(BaseModel):
     email: str
     phone: str
     name: str
+    address: Optional[str]
+
+class staff(BaseModel):
+    username:str
+    email:str
+    name:str
+    gender:int
+    
 
 class login(BaseModel):
     username: str
-    password: str
+    password: Optional[str]
 
 class account(BaseModel):
     username: str
@@ -40,6 +49,7 @@ class account(BaseModel):
     phone: Optional[str]
     email: Optional[str]
     name: Optional[str]
+    address: Optional[str]
 
 class verification(BaseModel):
     smsCode: Optional[str]
@@ -51,4 +61,5 @@ class verification(BaseModel):
     emailExpiration: Optional[float]
 
 class password(BaseModel):
-    password: str
+    oldPassword: str
+    newPassword: str

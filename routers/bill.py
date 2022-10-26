@@ -5,7 +5,7 @@ from schemas import bill as BillSC
 from schemas import account as AccountSC
 from model import bill as BillDB
 from model import account as AccountDB
-from .extend import security
+from .extend import security, sms, gmail
 from .extend import code as Code
 
 ORDERED = 1
@@ -23,12 +23,27 @@ async def checkCoupon(code: BillSC.coupon):
         return {"code":200, "value":value}
     return
 
-@router.post('/new_coupon', dependencies=[Depends(security.validateStaff)])
-async def createCoupon(info: BillSC.new):
+@router.post('/new-coupon', dependencies=[Depends(security.validateStaff)])
+async def createCoupon(info: BillSC.new, id_bill: int):
     code = Code.getCode()
     code = code.strip()
-    print(code)
+    # print(code)
     BillDB.insertCoupon(code, info.month, info.value, info.amount)
+    phone, email = BillDB.getEmailFromBill(id_bill)
+    # send code
+    content = f'Đơn hàng của bạn đã bị hủy. Chúng tôi gửi bạn mã giảm giá {code} với giá trị {info.value}, có hiệu lực trong vòng {info.month} tháng. Xin lỗi vì sự bất tiện này'
+    # print(content)
+    # sms.send_sms('+84' + phone[1:], content)
+    # gmail.sendEmail(email, 'Hủy đơn hàng', content)
+    return {"code": 200, "coupon": code}
+
+@router.post('/new-public-coupon', dependencies=[Depends(security.validateStaff)])
+async def createCoupon(info: BillSC.new):
+    print(info)
+    code = Code.getCode()
+    code = code.strip()
+    # print(code)
+    BillDB.insertPublicCoupon(code, info.month, info.value, info.amount)
     return {"code": 200, "coupon": code}
 
 @router.post('/pay-by-card')
@@ -98,6 +113,7 @@ async def buy(bill: BillSC.checkout, account: AccountSC.account = Depends(securi
 
 @router.post('/check')
 async def buy(bill: BillSC.checkout):
+    print(bill)
     coupon = ''
 
     product = bill.product.split(',')
@@ -114,6 +130,16 @@ async def buy(bill: BillSC.checkout):
     else:
         return {'code': 200, 'amount': res[0]}
 
+@router.get('/coupon')
+async def getCoupon():
+    res = BillDB.getPublicCoupon()
+    return {"code":200, "data":res}
+
+@router.get('/coupon2', dependencies=[Depends(security.validateStaff)])
+async def getCoupon():
+    res = BillDB.getAllCoupon()
+    return {"code":200, "data":res}
+
 @router.get('/historyB')
 async def historicBill(account: AccountSC.account = Depends(security.validateToken)):
     res = BillDB.histBill(account.phone)
@@ -125,11 +151,36 @@ async def historicProduct(id:str):
     res = BillDB.histProductBill(id)
     return {'code':200, 'data':res}
 
+@router.get('/state', dependencies=[Depends(security.validateToken)])
+async def historicProduct(id:int):
+    # idBill = 31
+    res = BillDB.getState(id)
+    return {'code':200, 'data':res}
+
+@router.get('/historyP2', dependencies=[Depends(security.validateToken)])
+async def historicProduct(id:str):
+    # idBill = 31
+    res = BillDB.histProductBill(id)
+    return {'code':200, 'data':res}
+
+@router.get('/search-coupon', dependencies=[Depends(security.validateStaff)])
+async def searchCoupon(search:str):
+    # idBill = 31
+    res = BillDB.searchCoupon('%'+search+'%')
+    return {'code':200, 'data':res}
+
+@router.get('/search', dependencies=[Depends(security.validateStaff)])
+async def searchBill(search:str, status: int):
+    # idBill = 31
+    res = BillDB.search(search, status)
+    return {'code':200, 'data':res}
+
 @router.get('/bill-staus', dependencies=[Depends(security.validateStaff)])
 async def listBill(status:int):
     res = BillDB.billStatus(status)
 
     return {'code':200, 'data':res}
+
 
 @router.put('/cancel')
 async def historicProduct(id:int, account: AccountSC.account = Depends(security.validateCustomer)):
@@ -139,7 +190,10 @@ async def historicProduct(id:int, account: AccountSC.account = Depends(security.
     else:
         return {'code':200}
 
-
+@router.put('/coupon', dependencies=[Depends(security.validateStaff)])
+async def changeCoupon(id:str, quantity:int):
+    res = BillDB.changeCoupon(id, quantity)
+    return {'code':200}
 
 @router.put('/force-cancel', dependencies=[Depends(security.validateStaff)])
 async def listBill(id:int):

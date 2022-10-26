@@ -39,10 +39,16 @@ def genRegToken(smsCode: str, emailCode: str, smsValid: str, emailValid: bool, s
 
 ### post
 @router.post('/create_staff', dependencies=[Depends(security.validateAdmin)])
-def createStaffAccount(staff: AccountSC.login):
+def createStaffAccount(staff: AccountSC.staff):
+    regex = r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b'
+    isValid = re.fullmatch(regex, staff.email)
+    if not isValid:
+        return {'code':404}
+    defaulPass = str(random.randint(0,999999))
+    defaulPass = (6-len(defaulPass))*"0" + defaulPass
     salt = bcrypt.gensalt()
-    hashed = bcrypt.hashpw(staff.password.encode(), salt)
-    err = AccountDB.createStaffAccount(staff.username, hashed)
+    hashed = bcrypt.hashpw(defaulPass.encode(), salt)
+    err = AccountDB.createStaffAccount(staff.username, hashed, staff.name, staff.gender, staff.email)
     if err == -2 or err is None:
         return {'code':400}
     elif err == -1:
@@ -50,7 +56,8 @@ def createStaffAccount(staff: AccountSC.login):
     elif err == 0:
         return {'code':402}
     else:
-        # token = generateToken(idRole=3, username=account.username)
+        content = f'Nhân viên {staff.name} đã được cung cấp tài khoản. \nVới thông tin username: {staff.username} và password: {defaulPass}\nVui lòng đổi mật khẩu sau khi nhận tin nhắn này'
+        gmail.sendEmail(staff.email, 'Tài khoản mới', content)
         return {'code':201}
 
 @router.post('/forgot')
@@ -67,6 +74,17 @@ def forgotPassword(valid: AccountSC.valid, verification: AccountSC.verification 
         res = AccountDB.getAccount(valid.username)
         if res.get('err') == -1:
             return {'code':400}
+        elif res.get('id_role') == 2:
+            req = AccountDB.getStaff(valid.username)
+            smsCodeV = str(random.randint(0,999999))
+            smsCodeV = (6-len(smsCodeV))*"0" + smsCodeV
+            # send code
+            # print(req.get('email'))
+            gmail.sendEmail(req.get('email'), 'Mã xác nhận', 'Mã xác nhận '+ smsCodeV)
+            time = datetime.datetime.now() + datetime.timedelta(minutes = 20)
+            smsExpirationV = datetime.datetime.timestamp(time)
+            token = genRegToken(smsCodeV, emailCodeV, smsValidV, emailValidV, smsExpirationV, emailExpirationV, usernameValidV)
+            return {'code':202, 'token': token}
         else:
             smsCodeV = str(random.randint(0,999999))
             smsCodeV = (6-len(smsCodeV))*"0" + smsCodeV
@@ -217,9 +235,9 @@ def receiveInformation(valid: AccountSC.valid, verification: AccountSC.verificat
     elif valid.smsState == 2:
         time = datetime.datetime.now()
         time = datetime.datetime.timestamp(time)
-        print(valid.smsCode)
-        print(verification.smsCode)
-        print(verification.smsExpiration > time)
+        # print(valid.smsCode)
+        # print(verification.smsCode)
+        # print(verification.smsExpiration > time)
         if valid.smsCode == verification.smsCode and time < verification.smsExpiration:
             smsValidV = True
         else:
@@ -264,7 +282,7 @@ def receiveInformation(valid: AccountSC.valid, verification: AccountSC.verificat
 def createCustomerAccount(account: AccountSC.customerAccount):
     salt = bcrypt.gensalt()
     hashed = bcrypt.hashpw(account.password.encode(), salt)
-    err = AccountDB.createCustomerAccount(account.username, hashed, account.name, account.gender, account.email, account.phone)
+    err = AccountDB.createCustomerAccount(account.username, hashed, account.name, account.gender, account.email, account.phone, account.address)
     if err == -2 or err is None:
         return {'code':400}
     elif err == -1:
@@ -281,6 +299,8 @@ def login(account: AccountSC.login):
     if res.get('err') == -1:
         return {'code':403}
     else:
+        if res.get('password') == None:
+            return {'code':403}
         if bcrypt.checkpw(account.password.encode(), res.get('password').encode()):
             acc = AccountDB.getAccount(account.username)
             token = generateToken(idRole=acc.get('id_role'), username=account.username)
@@ -300,17 +320,60 @@ def changeInformation(account: AccountSC.updateCustomer):
         return {'code':202}
 
 ### patch
-@router.patch('/password')
+@router.put('/password')
 def changePassword(password: AccountSC.password, account: AccountSC.account = Depends(security.validateToken)):
-    salt = bcrypt.gensalt()
-    hashed = bcrypt.hashpw(password.password.encode(), salt)
-    res = AccountDB.changePassword(account.username, hashed)
-    if res == -1:
+    res = AccountDB.getPassword(account.username)
+    if res.get('err') == -1:
         return {'code':404}
     else:
-        return {'code':200}
+        if bcrypt.checkpw(password.oldPassword.encode(), res.get('password').encode()):
+            salt = bcrypt.gensalt()
+            hashed = bcrypt.hashpw(password.newPassword.encode(), salt)
+            res = AccountDB.changePassword(account.username, hashed)
+            if res == -1:
+                return {'code':404}
+            else:
+                return {'code':200}
+        else:
+            return {'code':404}
+    
+@router.put('/staff', dependencies=[Depends(security.validateAdmin)])
+def createStaffAccount(staff: AccountSC.staff):
+    AccountDB.updateStaff(staff.name, staff.gender, staff.email)
+    return {'code':200}
+
+@router.put('/delete_staff', dependencies=[Depends(security.validateAdmin)])
+def createStaffAccount(staff: AccountSC.staff):
+    AccountDB.deleteStaff(staff.username)
+    return {'code':200}
+
+@router.put('/restore_staff', dependencies=[Depends(security.validateAdmin)])
+def createStaffAccount(staff: AccountSC.staff):
+    # defaulPass = '123456'
+    defaulPass = str(random.randint(0,999999))
+    defaulPass = (6-len(defaulPass))*"0" + defaulPass
+    salt = bcrypt.gensalt()
+    hashed = bcrypt.hashpw(defaulPass.encode(), salt)
+    # print(staff.username)
+    AccountDB.restoreStaffAccount(staff.username, hashed)
+    content = f'Nhân viên {staff.name} đã được khôi phục tài khoản. \nVới username: {staff.username} và password: {defaulPass}\nVui lòng đổi mật khẩu sau khi nhận tin nhắn này'
+    # send code
+    # send account
+    gmail.sendEmail(staff.email, 'Tài khoản mới', content)
+    print(content)
+    return {'code':200}
 
 ### get
 @router.get('/info')
 def getInformation(account: AccountSC.account = Depends(security.validateToken)):
     return account.dict()
+
+@router.get('/staff')
+def getInformation(account: AccountSC.account = Depends(security.validateAdmin)):
+    res = AccountDB.selectStaff()
+    return {'code':200, 'data':res}
+
+@router.get('/status', dependencies=[Depends(security.validateAdmin)])
+def getInformation(username: str):
+    res = AccountDB.statusStaff(username)
+    return {'code':200, 'data':res}
