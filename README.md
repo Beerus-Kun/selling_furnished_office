@@ -61,14 +61,14 @@ Giao diện chương trình sau khi chạy và vào web (Program interface after
 
 - Authorize là nơi nhập token để có thể thực hiện những giao thức cần quyền truy cập (Authorize is the place to enter tokens to be able to make protocols that require access)
 
-![image](image\2022-10-27003642.png)
+![image](image/2022-10-27003642.png)
 
 
 - Có những phương thức: POST, GET, DELETE, PATCH,... Những giao thức có biểu tượng ổ khóa là những giao thức cần token (There are methods: POST, GET, DELETE, PATCH,... The protocols with the padlock symbol are the ones that need the token.)
 
-![image](image\2022-10-27004758.png)
+![image](image/2022-10-27004758.png)
 
 
 - Các biến cần trong mỗi giao thức (Variables needed in each protocol)
 
-![image](image\2022-10-27004921.png)
+![image](image/2022-10-27004921.png)
